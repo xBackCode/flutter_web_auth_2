@@ -40,6 +40,11 @@ const html = '''
     <div id="text">You may now close this page</div>
   </main>
 </body>
+<script type="text/javascript">
+  window.opener=null;
+  window.open('','_self');
+  window.close();
+</script>
 </html>
 ''';
 
