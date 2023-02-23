@@ -75,7 +75,7 @@ const html = '''
         />
         <div>Success!</div>
       </div>
-      <div class="desc">Login is successful, you can close this page！</div>
+      <div class="desc">Login is successful, you can close this page!</div>
     </div>
   </body>
 </html>
