@@ -4,6 +4,7 @@ import FlutterMacOS
 
 @available(OSX 10.15, *)
 public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
+    var lastSession: ASWebAuthenticationSession?
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "flutter_web_auth_2", binaryMessenger: registrar.messenger)
         let instance = FlutterWebAuth2Plugin()
@@ -15,6 +16,10 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
             let url = URL(string: (call.arguments as! Dictionary<String, AnyObject>)["url"] as! String)!
             let callbackURLScheme = (call.arguments as! Dictionary<String, AnyObject>)["callbackUrlScheme"] as! String
 			let preferEphemeral = (call.arguments as! Dictionary<String, AnyObject>)["preferEphemeral"] as? Bool
+            
+            // 关闭上一个
+            lastSession?.cancel()
+            lastSession = nil
 
             var keepMe: Any? = nil
             let completionHandler = { (url: URL?, err: Error?) in
@@ -45,6 +50,7 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
 
             session.start()
             keepMe = session
+            lastSession = session
         } else {
             result(FlutterMethodNotImplemented)
         }
