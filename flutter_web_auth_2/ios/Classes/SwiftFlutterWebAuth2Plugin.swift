@@ -1,9 +1,63 @@
-import AuthenticationServices
 import Flutter
-import SafariServices
 import UIKit
+#if canImport(AuthenticationServices)
+import AuthenticationServices
+#endif
+#if canImport(SafariServices)
+import SafariServices
+#endif
+
+protocol AppleuthenticationSessionProtocol: NSObjectProtocol {
+    @discardableResult
+    func startSession() -> Bool
+
+    func cancelSession()
+
+    func canStartSession() -> Bool
+}
+
+#if canImport(AuthenticationServices)
+
+extension ASWebAuthenticationSession: AppleuthenticationSessionProtocol {
+    func startSession() -> Bool {
+        return start()
+    }
+
+    func cancelSession() {
+        cancel()
+    }
+
+    func canStartSession() -> Bool {
+        if #available(iOS 13.4, *) {
+            return canStart
+        }
+        return true
+    }
+}
+
+#endif
+
+#if canImport(SafariServices)
+
+extension SFAuthenticationSession: AppleuthenticationSessionProtocol {
+    func startSession() -> Bool {
+        return start()
+    }
+
+    func cancelSession() {
+        cancel()
+    }
+
+    func canStartSession() -> Bool {
+        return true
+    }
+}
+
+#endif
 
 public class SwiftFlutterWebAuth2Plugin: NSObject, FlutterPlugin {
+    var sessionToKeepAlive: AppleuthenticationSessionProtocol?
+
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "flutter_web_auth_2", binaryMessenger: registrar.messenger())
         let instance = SwiftFlutterWebAuth2Plugin()
@@ -13,6 +67,11 @@ public class SwiftFlutterWebAuth2Plugin: NSObject, FlutterPlugin {
 
     var completionHandler: ((URL?, Error?) -> Void)?
 
+    private func destroySession() {
+        sessionToKeepAlive?.cancelSession()
+        sessionToKeepAlive = nil
+    }
+
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if call.method == "authenticate",
            let arguments = call.arguments as? [String: AnyObject],
@@ -21,17 +80,10 @@ public class SwiftFlutterWebAuth2Plugin: NSObject, FlutterPlugin {
            let callbackURLScheme = arguments["callbackUrlScheme"] as? String,
            let preferEphemeral = arguments["preferEphemeral"] as? Bool
         {
-            var sessionToKeepAlive: Any? // if we do not keep the session alive, it will get closed immediately while showing the dialog
-            completionHandler = { (url: URL?, err: Error?) in
-                self.completionHandler = nil
-                
-                if #available(iOS 12, *) {
-                    (sessionToKeepAlive as! ASWebAuthenticationSession).cancel()
-                } else if #available(iOS 11, *) {
-                    (sessionToKeepAlive as! SFAuthenticationSession).cancel()
-                }
-                
-                sessionToKeepAlive = nil
+            destroySession()
+            completionHandler = { [weak self] (url: URL?, err: Error?) in
+                self?.completionHandler = nil
+                self?.destroySession()
 
                 if let err = err {
                     if #available(iOS 12, *) {
@@ -64,20 +116,20 @@ public class SwiftFlutterWebAuth2Plugin: NSObject, FlutterPlugin {
                 let session = ASWebAuthenticationSession(url: url, callbackURLScheme: callbackURLScheme, completionHandler: completionHandler!)
 
                 if #available(iOS 13, *) {
-                    var rootViewController: UIViewController? = nil
+                    var rootViewController: UIViewController?
 
                     // FlutterViewController
-                    if (rootViewController == nil) {
+                    if rootViewController == nil {
                         rootViewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController
                     }
 
                     // UIViewController
-                    if (rootViewController == nil) {
+                    if rootViewController == nil {
                         rootViewController = UIApplication.shared.keyWindow?.rootViewController
                     }
 
                     // ACQUIRE_ROOT_VIEW_CONTROLLER_FAILED
-                    if (rootViewController == nil) {
+                    if rootViewController == nil {
                         result(FlutterError.acquireRootViewControllerFailed)
                         return
                     }
@@ -97,15 +149,14 @@ public class SwiftFlutterWebAuth2Plugin: NSObject, FlutterPlugin {
                     session.prefersEphemeralWebBrowserSession = preferEphemeral
                 }
 
-                session.start()
                 sessionToKeepAlive = session
             } else if #available(iOS 11, *) {
                 let session = SFAuthenticationSession(url: url, callbackURLScheme: callbackURLScheme, completionHandler: completionHandler!)
-                session.start()
                 sessionToKeepAlive = session
             } else {
                 result(FlutterError(code: "FAILED", message: "This plugin does currently not support iOS lower than iOS 11", details: nil))
             }
+            sessionToKeepAlive?.startSession()
         } else if call.method == "cleanUpDanglingCalls" {
             // we do not keep track of old callbacks on iOS, so nothing to do here
             result(nil)
@@ -138,8 +189,9 @@ extension FlutterViewController: ASWebAuthenticationPresentationContextProviding
     }
 }
 
-fileprivate extension FlutterError {
+private extension FlutterError {
     static var acquireRootViewControllerFailed: FlutterError {
         return FlutterError(code: "ACQUIRE_ROOT_VIEW_CONTROLLER_FAILED", message: "Failed to acquire root view controller", details: nil)
     }
 }
+
