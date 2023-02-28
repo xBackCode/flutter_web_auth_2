@@ -1,6 +1,6 @@
 import AuthenticationServices
-import SafariServices
 import FlutterMacOS
+import SafariServices
 
 @available(OSX 10.15, *)
 public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
@@ -13,15 +13,15 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if call.method == "authenticate" {
-            let url = URL(string: (call.arguments as! Dictionary<String, AnyObject>)["url"] as! String)!
-            let callbackURLScheme = (call.arguments as! Dictionary<String, AnyObject>)["callbackUrlScheme"] as! String
-			let preferEphemeral = (call.arguments as! Dictionary<String, AnyObject>)["preferEphemeral"] as? Bool
-            
+            let url = URL(string: (call.arguments as! [String: AnyObject])["url"] as! String)!
+            let callbackURLScheme = (call.arguments as! [String: AnyObject])["callbackUrlScheme"] as! String
+            let preferEphemeral = (call.arguments as! [String: AnyObject])["preferEphemeral"] as? Bool
+
             // 关闭上一个
             lastSession?.cancel()
             lastSession = nil
 
-            var keepMe: Any? = nil
+            var keepMe: Any?
             let completionHandler = { (url: URL?, err: Error?) in
                 keepMe = nil
 
@@ -39,10 +39,13 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
             }
 
             let session = ASWebAuthenticationSession(url: url, callbackURLScheme: callbackURLScheme, completionHandler: completionHandler)
-			session.prefersEphemeralWebBrowserSession = preferEphemeral ?? false
+            session.prefersEphemeralWebBrowserSession = preferEphemeral ?? false
 
-            guard let provider = NSApplication.shared.keyWindow!.contentViewController as? FlutterViewController else {
-                result(FlutterError(code: "FAILED", message: "Failed to aquire root FlutterViewController" , details: nil))
+            guard
+                let keyWindow = NSApplication.shared.keyWindow,
+                let provider = keyWindow.contentViewController as? FlutterViewController
+            else {
+                result(FlutterError(code: "FAILED", message: "Failed to aquire root FlutterViewController", details: nil))
                 return
             }
 
@@ -60,6 +63,6 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
 @available(OSX 10.15, *)
 extension FlutterViewController: ASWebAuthenticationPresentationContextProviding {
     public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        return self.view.window!
+        return view.window!
     }
 }
