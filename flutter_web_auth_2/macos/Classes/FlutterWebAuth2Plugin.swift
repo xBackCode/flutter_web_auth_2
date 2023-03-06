@@ -1,11 +1,9 @@
 import AuthenticationServices
-import FlutterMacOS
 import SafariServices
+import FlutterMacOS
 
 @available(OSX 10.15, *)
 public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
-    var lastSession: ASWebAuthenticationSession?
-    var lastTimeStamp: TimeInterval?
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "flutter_web_auth_2", binaryMessenger: registrar.messenger)
         let instance = FlutterWebAuth2Plugin()
@@ -14,26 +12,13 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if call.method == "authenticate" {
-            if let lastTimeStamp = lastTimeStamp {
-                let currentTimeStamp = Date.timeIntervalSinceReferenceDate
-                if currentTimeStamp - lastTimeStamp < 0.2 {
-                    result(FlutterError(code: "CANCELED", message: "User canceled login", details: nil))
-                    return
-                }
-            }
+            let url = URL(string: (call.arguments as! Dictionary<String, AnyObject>)["url"] as! String)!
+            let callbackURLScheme = (call.arguments as! Dictionary<String, AnyObject>)["callbackUrlScheme"] as! String
+            let preferEphemeral = (call.arguments as! Dictionary<String, AnyObject>)["preferEphemeral"] as? Bool
 
-            let url = URL(string: (call.arguments as! [String: AnyObject])["url"] as! String)!
-            let callbackURLScheme = (call.arguments as! [String: AnyObject])["callbackUrlScheme"] as! String
-            let preferEphemeral = (call.arguments as! [String: AnyObject])["preferEphemeral"] as? Bool
-
-            // 关闭上一个
-            lastSession?.cancel()
-            lastSession = nil
-
-            var keepMe: Any?
-            let completionHandler = { [weak self] (url: URL?, err: Error?) in
+            var keepMe: Any? = nil
+            let completionHandler = { (url: URL?, err: Error?) in
                 keepMe = nil
-                self?.lastTimeStamp = nil
 
                 if let err = err {
                     if case ASWebAuthenticationSessionError.canceledLogin = err {
@@ -51,11 +36,8 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
             let session = ASWebAuthenticationSession(url: url, callbackURLScheme: callbackURLScheme, completionHandler: completionHandler)
             session.prefersEphemeralWebBrowserSession = preferEphemeral ?? false
 
-            guard
-                let keyWindow = NSApplication.shared.keyWindow,
-                let provider = keyWindow.contentViewController as? FlutterViewController
-            else {
-                result(FlutterError(code: "FAILED", message: "Failed to aquire root FlutterViewController", details: nil))
+            guard let provider = NSApplication.shared.keyWindow!.contentViewController as? FlutterViewController else {
+                result(FlutterError(code: "FAILED", message: "Failed to aquire root FlutterViewController" , details: nil))
                 return
             }
 
@@ -63,8 +45,6 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
 
             session.start()
             keepMe = session
-            lastTimeStamp = Date.timeIntervalSinceReferenceDate
-            lastSession = session
         } else {
             result(FlutterMethodNotImplemented)
         }
@@ -74,6 +54,6 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
 @available(OSX 10.15, *)
 extension FlutterViewController: ASWebAuthenticationPresentationContextProviding {
     public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        return view.window!
+        return self.view.window!
     }
 }
