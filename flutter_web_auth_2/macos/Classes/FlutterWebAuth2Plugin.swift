@@ -15,7 +15,7 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if call.method == "authenticate" {
             // exit(0)
-            let a: String = nil
+            let a: String? = nil
             let b = a!
             if let session = authSession {
                 if let timestamp = session.timestamp, Date().timeIntervalSince1970 - timestamp > 1 {
