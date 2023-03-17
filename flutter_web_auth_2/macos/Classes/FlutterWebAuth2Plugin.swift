@@ -14,6 +14,8 @@ public class FlutterWebAuth2Plugin: NSObject, FlutterPlugin {
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if call.method == "authenticate" {
+            // exit(0)
+            exit(0)
             if let session = authSession {
                 if let timestamp = session.timestamp, Date().timeIntervalSince1970 - timestamp > 1 {
                     // 老的 session 打开超过1s就关闭
