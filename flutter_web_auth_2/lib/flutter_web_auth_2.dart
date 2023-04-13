@@ -7,6 +7,7 @@ import 'package:flutter_web_auth_2_platform_interface/flutter_web_auth_2_platfor
 
 export 'package:flutter_web_auth_2_platform_interface/flutter_web_auth_2_platform_interface.dart';
 
+export 'src/flutter_web_auth_2_linux.dart' hide html;
 export 'src/flutter_web_auth_2_windows.dart'
     if (dart.library.html) 'src/flutter_web_auth_2_web.dart';
 
@@ -34,7 +35,7 @@ class FlutterWebAuth2 {
 
   static void _assertCallbackScheme(String callbackUrlScheme) {
     if (!_schemeRegExp.hasMatch(callbackUrlScheme) &&
-        (kIsWeb || !Platform.isWindows)) {
+        (kIsWeb || (!Platform.isWindows && !Platform.isLinux))) {
       throw ArgumentError.value(
         callbackUrlScheme,
         'callbackUrlScheme',
@@ -60,11 +61,15 @@ class FlutterWebAuth2 {
   /// [redirectOriginOverride] is used to override the origin of the redirect
   /// URL. This is useful for cases where the redirect URL is not on the same
   /// domain (ex. local testing). Only supported in web.
+  ///
+  /// [contextArgs] is used to pass additional settings for the URL open call
+  /// on the web platform.
   static Future<String> authenticate({
     required String url,
     required String callbackUrlScheme,
     bool? preferEphemeral,
     String? redirectOriginOverride,
+    List contextArgs = const [],
   }) async {
     assert(
       redirectOriginOverride == null || kDebugMode,
@@ -82,6 +87,7 @@ class FlutterWebAuth2 {
       callbackUrlScheme: callbackUrlScheme,
       preferEphemeral: preferEphemeral ?? false,
       redirectOriginOverride: redirectOriginOverride,
+      contextArgs: contextArgs,
     );
   }
 
