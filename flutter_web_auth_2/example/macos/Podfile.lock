@@ -1,23 +1,35 @@
 PODS:
-  - flutter_web_auth (0.4.0):
+  - flutter_web_auth_2 (1.1.1):
     - FlutterMacOS
-  - FlutterMacOS (2.0.0)
+    - IQObjcRuntime (~> 0.3.0)
+  - FlutterMacOS (1.0.0)
+  - IQObjcRuntime (0.3.0)
+  - url_launcher_macos (0.0.1):
+    - FlutterMacOS
 
 DEPENDENCIES:
-  - flutter_web_auth (from `Flutter/ephemeral/.symlinks/plugins/flutter_web_auth/macos`)
+  - flutter_web_auth_2 (from `Flutter/ephemeral/.symlinks/plugins/flutter_web_auth_2/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
 
 SPEC REPOS:
   trunk:
-    - FlutterMacOS
+    - IQObjcRuntime
 
 EXTERNAL SOURCES:
-  flutter_web_auth:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_web_auth/macos
+  flutter_web_auth_2:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_web_auth_2/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  url_launcher_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos
 
 SPEC CHECKSUMS:
-  flutter_web_auth: 0432fb32dd550d65cc874aa596d952b2add0ad9d
-  FlutterMacOS: 2f1b456c4d9436c4d4d13919bd3be8ef03ba6322
+  flutter_web_auth_2: 7149548a00fa97f26baec04fcd09f32b58f1d526
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  IQObjcRuntime: 7173b49ff0697aab7e1dd90670798dc66e9b663a
+  url_launcher_macos: 5335912b679c073563f29d89d33d10d459f95451
 
-PODFILE CHECKSUM: 882fce9150893cd66c23bbd28a572b3439b8ac6d
+PODFILE CHECKSUM: 0d3963a09fc94f580682bd88480486da345dc3f0
 
-COCOAPODS: 1.10.1
+COCOAPODS: 1.12.1
